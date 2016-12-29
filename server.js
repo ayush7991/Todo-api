@@ -99,7 +99,7 @@ app.put('/todos/:id', function(req, res) {
 		if (todo) {
 			todo.update(attributes).then(function(todo) {
 				res.json(todo.toJSON());
-			}, function(e) { 
+			}, function(e) {
 				res.status(400).json(e);
 			})
 		} else {
@@ -111,27 +111,34 @@ app.put('/todos/:id', function(req, res) {
 
 });
 
-app.post('/users',function(req,res){
+app.post('/users', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
-	db.user.create(body).then(function(user){
+	db.user.create(body).then(function(user) {
 		res.json(user.toPublicJSON());
-	},function(e){
-		res.status(400).json(e);	
+	}, function(e) {
+		res.status(400).json(e);
 	})
 })
 
-app.post('/users/login',function(req,res){
+app.post('/users/login', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
-	
-	db.user.authenticate(body).then(function(user){
-		res.json(user.toPublicJSON());
-	},function(){
+
+	db.user.authenticate(body).then(function(user) {
+		var token = user.generateToken('authentication');
+		if (token) {
+			res.header('Auth', token).json(user.toPublicJSON());
+		} else {
+			res.status(401).send();
+		}
+	}, function() {
 		res.status(401).send();
 	});
 
 })
 
-db.sequelize.sync({force:true}).then(function() {
+db.sequelize.sync({
+	force: true
+}).then(function() {
 	app.listen(PORT, function() {
 		console.log('express listening on port ' + PORT + '!');
 	})
